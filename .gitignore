@@ -1,0 +1,12 @@
+/venv/
+/env/
+/.idea/
+/__pycache__/
+
+venv/
+env/
+.idea/
+__pycache__/
+
+PROJECT_DOCUMENTATION.md
+PROJECT_IMPROVEMENTS.md
