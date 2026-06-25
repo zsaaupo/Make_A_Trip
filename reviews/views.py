@@ -6,7 +6,6 @@ from rest_framework.response import Response
 
 from core.constants import ApprovalStatus
 from core.permissions import IsAdminUser
-from core.utils import send_booking_email
 from .models import Review
 from .serializers import ReviewSerializer, ReviewCreateSerializer
 from .utils import get_booking_model

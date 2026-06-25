@@ -7,3 +7,9 @@ venv/
 env/
 .idea/
 __pycache__/
+
+# Environment variables — never commit secrets
+.env
+.env.*
+
+READMEold.md

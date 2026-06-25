@@ -4,7 +4,16 @@ Cross-cutting helper functions (SRS section 3.6):
   - cancellation refund calculation (3.6.2)
   - booking status notification emails (3.6.3)
 """
+import os
 import re
+from threading import Thread
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -37,27 +46,72 @@ def calculate_refund_percentage(service_datetime, cancelled_at=None):
     return 0
 
 
-def send_booking_email(booking, subject, template_lines):
-    """
-    Lightweight notification helper. Uses Django's email backend, which is
-    set to the console backend by default (prints to the terminal) so the
-    project runs with zero extra configuration. Swap EMAIL_BACKEND in
-    settings.py to send real email.
-    """
-    customer = booking.customer
-    body = "\n".join(template_lines)
-    try:
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[customer.email],
-            fail_silently=True,
-        )
-    except Exception:
-        # Notifications must never break the booking flow itself.
-        pass
+# def send_booking_email(booking, subject, template_lines):
+#     """
+#     Lightweight notification helper. Uses Django's email backend, which is
+#     set to the console backend by default (prints to the terminal) so the
+#     project runs with zero extra configuration. Swap EMAIL_BACKEND in
+#     settings.py to send real email.
+#     """
+#     customer = booking.customer
+#     body = "\n".join(template_lines)
+#     try:
+#         send_mail(
+#             subject=subject,
+#             message=body,
+#             from_email=settings.DEFAULT_FROM_EMAIL,
+#             recipient_list=[customer.email],
+#             fail_silently=True,
+#         )
+#     except Exception:
+#         # Notifications must never break the booking flow itself.
+#         pass
 
+def send_mail(to, subject, body):
+
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = '465'
+    sender_email = os.getenv('EMAIL_HOST_USER')
+    sender_password = os.getenv('EMAIL_HOST_PASSWORD')
+    server = None
+
+    try:
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server.ehlo()
+        server.login(sender_email, sender_password)
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = to
+        msg['Subject'] = subject
+
+
+        html = """\
+        <html>
+            <head></head>
+            <body>
+        """
+        html += html + body
+        """
+            </body>
+        </html>
+        """
+        msg.attach(MIMEText(html, 'html'))
+        server.sendmail(
+            from_addr=sender_email,
+            to_addrs=to,
+            msg=msg.as_string())
+        print("Mail Send")
+    except Exception as ex:
+        print(str(ex))
+    finally:
+        if server != None:
+            server.quit()
+
+
+def thread_send_email(to, subject, body):
+
+    thread = Thread(target=send_mail, args=(to, subject, body))
+    thread.start()
 
 def notify_status_change(booking, invoice_id, service_label):
     """Sends the appropriate email for the booking's current status (3.6.3)."""
@@ -72,11 +126,15 @@ def notify_status_change(booking, invoice_id, service_label):
     lines = [
         f"Hi {booking.customer.profile.full_name if hasattr(booking.customer, 'profile') else booking.customer.username},",
         "",
-        f"Invoice: {invoice_id}",
-        f"Status: {booking.get_status_display()}",
-        f"Total amount: {booking.total_amount}",
+        f"Invoice: {invoice_id},",
+        f"Status: {booking.get_status_display()},",
+        f"Total amount: {booking.total_amount},",
     ]
     if booking.status == 'cancelled' and booking.refund_percentage is not None:
         lines.append(f"Refund: {booking.refund_percentage}% of the paid amount.")
     lines += ["", "Thank you for using Make a trip."]
-    send_booking_email(booking, subject, lines)
+    email = booking.customer.email
+
+    body = " ".join(lines)
+
+    thread_send_email(email, subject, body)

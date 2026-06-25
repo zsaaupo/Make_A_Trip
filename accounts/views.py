@@ -1,7 +1,15 @@
+import os
+from threading import Thread
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.conf import settings
 from django.middleware.csrf import get_token
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes, throttle_classes
@@ -22,22 +30,51 @@ class LoginRateThrottle(AnonRateThrottle):
     """NFR-SEC-03: basic brute-force mitigation on the login endpoint."""
     scope = 'login'
 
+def send_mail(to, subject, body):
 
-def _send_otp_email(user, profile, purpose="verify your account"):
-    otp = profile.generate_otp()
-    send_mail(
-        subject="Your Make a trip verification code",
-        message=(
-            f"Hi {profile.full_name},\n\n"
-            f"Use this code to {purpose}: {otp}\n"
-            f"It expires in {settings.OTP_VALIDITY_MINUTES} minutes.\n\n"
-            f"If you didn't request this, you can ignore this email."
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=True,
-    )
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = '465'
+    sender_email = os.getenv('EMAIL_HOST_USER')
+    sender_password = os.getenv('EMAIL_HOST_PASSWORD')
+    server = None
 
+    try:
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server.ehlo()
+        server.login(sender_email, sender_password)
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = to
+        msg['Subject'] = subject
+
+
+        html = """\
+        <html>
+            <head></head>
+            <body>
+        """
+        html += body.replace('\r\n', '<br/>\r\n')
+        """
+            </body>
+        </html>
+        """
+        msg.attach(MIMEText(html, 'html'))
+        server.sendmail(
+            from_addr=sender_email,
+            to_addrs=to,
+            msg=msg.as_string())
+        print("Mail Send")
+    except Exception as ex:
+        print(str(ex))
+    finally:
+        if server != None:
+            server.quit()
+
+
+def thread_send_email(to, subject, body):
+
+    thread = Thread(target=send_mail, args=(to, subject, body))
+    thread.start()
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -53,7 +90,10 @@ def register_view(request):
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    _send_otp_email(user, user.profile, purpose="verify your new account")
+    otp = user.profile.generate_otp()
+
+    thread_send_email(user.email, 'Make a trip OTP', 'OTP : ' + str(otp))
+
     return Response(
         {'message': 'Account created. Check your email for a verification code.', 'email': user.email},
         status=status.HTTP_201_CREATED,
@@ -91,13 +131,17 @@ def verify_otp_view(request):
 def resend_otp_view(request):
     serializer = ResendOTPSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
+
     try:
         user = User.objects.get(email__iexact=serializer.validated_data['email'])
     except User.DoesNotExist:
         return Response({'detail': 'No account with this email.'}, status=status.HTTP_404_NOT_FOUND)
+
     if user.profile.is_email_verified:
         return Response({'message': 'Email already verified. You can log in.'})
-    _send_otp_email(user, user.profile, purpose="verify your account")
+
+    otp = user.profile.generate_otp()
+    thread_send_email(user.email, 'Make a trip OTP', 'OTP : ' + str(otp))
     return Response({'message': 'A new code has been sent.'})
 
 
@@ -162,7 +206,10 @@ def password_reset_request_view(request):
     except User.DoesNotExist:
         # Don't reveal whether the email exists.
         return Response({'message': 'If that email exists, a reset code has been sent.'})
-    _send_otp_email(user, user.profile, purpose="reset your password")
+
+    otp = user.profile.generate_otp()
+
+    thread_send_email(user.email, 'reset your password', 'OTP : ' + str(otp))
     return Response({'message': 'If that email exists, a reset code has been sent.'})
 
 

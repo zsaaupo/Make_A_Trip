@@ -19,16 +19,15 @@ function renderHeader(car) {
   document.getElementById('summary-total').textContent = formatMoney(car.price);
 
   document.getElementById('car-meta').innerHTML = `
-    <div class="summary-row"><span>Departure</span><span>${formatDateTime(car.trip_date)}</span></div>
-    ${car.return_date ? `<div class="summary-row"><span>Return</span><span>${formatDateTime(car.return_date)}</span></div>` : ''}
+<!--    <div class="summary-row"><span>Departure</span><span>${formatDateTime(car.trip_date)}</span></div>-->
     <div class="summary-row"><span>Capacity</span><span>${car.capacity} seats</span></div>
     <div class="summary-row"><span>Climate control</span><span>${car.climate_control === 'ac' ? 'AC' : 'Non-AC'}</span></div>`;
 
-  const confirmBtn = document.getElementById('confirm-btn');
-  if (car.is_booked) {
-    confirmBtn.disabled = true;
-    document.getElementById('booked-note').style.display = 'block';
-  }
+  // const confirmBtn = document.getElementById('confirm-btn');
+  // if (car.is_booked) {
+  //   confirmBtn.disabled = true;
+  //   document.getElementById('booked-note').style.display = 'block';
+  // }
 }
 
 async function loadCar() {
@@ -64,8 +63,12 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
     car: Number(CAR_ID),
     payment_method: document.querySelector('input[name=payment]:checked').value,
     coupon_code: document.getElementById('coupon').value.trim(),
+    trip_date: document.getElementById('car-trip-date').value,
     terms_accepted: true,
   };
+
+  console.log(payload)
+  console.log(document.getElementById('car-trip-date').value)
 
   btn.disabled = true; btn.textContent = 'Booking...';
   try {

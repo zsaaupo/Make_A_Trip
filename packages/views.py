@@ -156,8 +156,7 @@ def booking_list_create(request):
         coupon.used_count += 1
         coupon.save(update_fields=['used_count'])
 
-    naive_start = datetime.combine(package.date, time(0, 0))
-    service_dt = timezone.make_aware(naive_start, dt_timezone.utc)
+    service_dt = data['service_date']
 
     booking = PackageBooking.objects.create(
         customer=request.user,

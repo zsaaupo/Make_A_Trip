@@ -8,7 +8,7 @@ class BusAdmin(admin.ModelAdmin):
 
 @admin.register(Car)
 class CarAdmin(admin.ModelAdmin):
-    list_display = ['name', 'trip_type', 'capacity', 'trip_date', 'status']
+    list_display = ['name', 'trip_type', 'capacity', 'status']
     list_filter = ['status', 'trip_type']
 
 @admin.register(BusBooking)

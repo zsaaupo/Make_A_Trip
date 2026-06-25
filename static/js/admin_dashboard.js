@@ -250,7 +250,7 @@ async function loadCars() {
         <td>${escapeHtml(c.name)}</td>
         <td>${c.trip_type}</td>
         <td>${c.capacity}</td>
-        <td>${formatDateTime(c.trip_date)}</td>
+<!--        <td>${formatDateTime(c.trip_date)}</td>-->
         <td>${formatMoney(c.price)}</td>
         <td><span class="${statusBadgeClass(c.status)}">${escapeHtml(c.status)}</span></td>
         <td>
@@ -259,7 +259,7 @@ async function loadCars() {
           <button class="btn btn--small btn--danger" onclick="deleteCar(${c.id})">Delete</button>
         </td>
       </tr>`).join('');
-    container.innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Capacity</th><th>Trip date</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    container.innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Capacity</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   } catch (err) {
     container.innerHTML = `<p class="muted">Couldn't load cars: ${escapeHtml(err.message)}</p>`;
   }
@@ -269,10 +269,10 @@ document.getElementById('car-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData();
   formData.append('name', document.getElementById('car-name').value);
-  formData.append('trip_date', document.getElementById('car-trip-date').value);
+  // formData.append('trip_date', document.getElementById('car-trip-date').value);
   formData.append('trip_type', document.getElementById('car-trip-type').value);
-  const returnDate = document.getElementById('car-return-date').value;
-  if (returnDate) formData.append('return_date', returnDate);
+  // const returnDate = document.getElementById('car-return-date').value;
+  // if (returnDate) formData.append('return_date', returnDate);
   formData.append('capacity', document.getElementById('car-capacity').value);
   formData.append('climate_control', document.getElementById('car-climate').value);
   formData.append('price', document.getElementById('car-price').value);
@@ -347,7 +347,7 @@ document.getElementById('package-form').addEventListener('submit', async (e) => 
   const formData = new FormData();
   formData.append('name', document.getElementById('p-name').value);
   formData.append('location', document.getElementById('p-location').value);
-  formData.append('date', document.getElementById('p-date').value);
+  // formData.append('date', document.getElementById('p-date').value);
   formData.append('duration', document.getElementById('p-duration').value);
   formData.append('type', document.getElementById('p-type').value);
   const hotelId = document.getElementById('p-hotel').value;

@@ -98,7 +98,7 @@ def car_list(request):
     capacity = request.query_params.get('capacity')
     if capacity:
         qs = qs.filter(capacity=capacity)
-    cars = [c for c in qs if not c.is_booked()]
+    cars = [c for c in qs]
     return Response(CarSerializer(cars, many=True, context={'request': request}).data)
 
 
@@ -272,9 +272,9 @@ def car_booking_list_create(request):
     serializer = CarBookingSerializer(data=request.data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
+    print(data)
     car = data['car']
     subtotal = car.price
-
     discount, coupon_code, error_response = _apply_coupon(request, subtotal)
     if error_response:
         return error_response
@@ -288,7 +288,8 @@ def car_booking_list_create(request):
         total_amount=subtotal - discount,
         coupon_code=coupon_code,
         discount_amount=discount,
-        service_date=car.trip_date,
+        service_date=data['trip_date'],
+        trip_date=data['trip_date'],
         terms_accepted=True,
     )
     notify_status_change(booking, booking.invoice_id, "car")

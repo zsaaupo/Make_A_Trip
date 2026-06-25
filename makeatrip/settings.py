@@ -88,8 +88,7 @@ PASSWORD_HASHERS = [
 
 LANGUAGE_CODE = 'en-us'
 
-# REQ: All timestamps must be stored/processed in UTC
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 

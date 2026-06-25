@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-
 from core.constants import ApprovalStatus, ClimateControl, BookingStatus
 from core.models import BookingBase
 
@@ -58,28 +57,28 @@ class Car(models.Model):
     ]
 
     name = models.CharField(max_length=100, default='Charter Car')
-    trip_date = models.DateTimeField()
+    # trip_date = models.DateTimeField()
     photo = models.ImageField(upload_to=car_photo_path)
     climate_control = models.CharField(max_length=10, choices=ClimateControl.CHOICES)
     capacity = models.PositiveIntegerField(choices=CAPACITY_CHOICES)
-    return_date = models.DateTimeField(null=True, blank=True, help_text="Required for round trips only")
+    # return_date = models.DateTimeField(null=True, blank=True, help_text="Required for round trips only")
     trip_type = models.CharField(max_length=25, choices=TRIP_TYPE_CHOICES)
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Calculated by admin from trip type and duration")
     status = models.CharField(max_length=10, choices=ApprovalStatus.CHOICES, default=ApprovalStatus.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['trip_date']
+        ordering = ['trip_type']
 
     def __str__(self):
         return f"{self.name} ({self.get_trip_type_display()})"
 
-    def clean(self):
-        if self.trip_type == self.TRIP_ROUND_TRIP and not self.return_date:
-            raise ValidationError("Return date is required for round trips.")
-
-    def is_booked(self):
-        return self.bookings.filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED]).exists()
+    # def clean(self):
+    #     if self.trip_type == self.TRIP_ROUND_TRIP and not self.return_date:
+    #         raise ValidationError("Return date is required for round trips.")
+    #
+    # def is_booked(self):
+    #     return self.bookings.filter(status__in=[BookingStatus.PENDING, BookingStatus.CONFIRMED]).exists()
 
 
 class BusBooking(BookingBase):
@@ -98,6 +97,7 @@ class BusBooking(BookingBase):
 class CarBooking(BookingBase):
     """REQ-TBK-08, REQ-TBK-09, REQ-TBK-12."""
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='bookings')
+    trip_date = models.DateTimeField()
 
     def __str__(self):
         return self.invoice_id

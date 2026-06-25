@@ -29,20 +29,20 @@ class BusSerializer(serializers.ModelSerializer):
 
 class CarSerializer(serializers.ModelSerializer):
     avg_rating = serializers.SerializerMethodField()
-    is_booked = serializers.SerializerMethodField()
+    # is_booked = serializers.SerializerMethodField()
 
     class Meta:
         model = Car
         fields = [
-            'id', 'name', 'trip_date', 'photo', 'climate_control', 'capacity',
-            'return_date', 'trip_type', 'price', 'status', 'avg_rating', 'is_booked', 'created_at',
+            'id', 'name', 'photo', 'climate_control', 'capacity',
+            'trip_type', 'price', 'status', 'avg_rating', 'created_at',
         ]
 
     def get_avg_rating(self, obj):
         return Review.objects.average_for(car=obj)
 
-    def get_is_booked(self, obj):
-        return obj.is_booked()
+    # def get_is_booked(self, obj):
+    #     return obj.is_booked()
 
 
 class BusBookingSerializer(serializers.ModelSerializer):
@@ -94,7 +94,7 @@ class CarBookingSerializer(serializers.ModelSerializer):
             'id', 'invoice_id', 'car', 'car_detail', 'status', 'status_display',
             'payment_method', 'total_amount', 'coupon_code', 'discount_amount',
             'service_date', 'terms_accepted', 'cancelled_at', 'refund_percentage',
-            'decline_reason', 'created_at',
+            'decline_reason', 'created_at', 'trip_date',
         ]
         read_only_fields = [
             'invoice_id', 'status', 'total_amount', 'discount_amount', 'service_date',
@@ -102,9 +102,6 @@ class CarBookingSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        car = attrs['car']
-        if car.is_booked():
-            raise serializers.ValidationError("This car is already booked for its scheduled trip.")
         if not attrs.get('terms_accepted'):
             raise serializers.ValidationError("You must accept the Terms & Conditions to confirm a booking.")
         return attrs

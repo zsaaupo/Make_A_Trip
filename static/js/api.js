@@ -74,7 +74,7 @@ function showToast(message, type = 'info') {
 /* --------------------------- Formatting ---------------------------- */
 function formatMoney(value) {
   const n = Number(value || 0);
-  return '$' + n.toFixed(2);
+  return 'Tk ' + n.toFixed(2);
 }
 
 function formatDate(value) {

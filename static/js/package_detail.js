@@ -64,6 +64,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
     num_people: Number(document.getElementById('b-people').value || 1),
     payment_method: document.querySelector('input[name=payment]:checked').value,
     coupon_code: document.getElementById('coupon').value.trim(),
+    service_date: document.getElementById('package-booking-date').value,
     terms_accepted: true,
   };
 

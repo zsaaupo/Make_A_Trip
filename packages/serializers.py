@@ -13,7 +13,7 @@ class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Package
         fields = [
-            'id', 'name', 'date', 'location', 'type', 'duration', 'hotel', 'hotel_detail',
+            'id', 'name', 'location', 'type', 'duration', 'hotel', 'hotel_detail',
             'transport_content_type', 'transport_object_id', 'transport_label',
             'inclusions', 'exclusions', 'photo', 'price', 'status', 'avg_rating', 'created_at',
         ]
@@ -35,10 +35,10 @@ class PackageBookingSerializer(serializers.ModelSerializer):
             'id', 'invoice_id', 'package', 'package_detail', 'num_people', 'status',
             'status_display', 'payment_method', 'total_amount', 'coupon_code',
             'discount_amount', 'service_date', 'terms_accepted', 'cancelled_at',
-            'refund_percentage', 'decline_reason', 'created_at',
+            'refund_percentage', 'decline_reason', 'created_at', 'service_date',
         ]
         read_only_fields = [
-            'invoice_id', 'status', 'total_amount', 'discount_amount', 'service_date',
+            'invoice_id', 'status', 'total_amount', 'discount_amount',
             'cancelled_at', 'refund_percentage', 'decline_reason', 'created_at',
         ]
 

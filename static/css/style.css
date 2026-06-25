@@ -240,7 +240,7 @@ table.data-table tbody tr:hover { background: var(--color-bg); }
 .modal__close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--color-text-muted); }
 
 /* ------------------------------- Seat map ------------------------------- */
-.seat-map { display: grid; grid-template-columns: repeat(4, 44px); gap: 10px; justify-content: center; margin: 20px 0; }
+.seat-map { display: grid; grid-template-columns: repeat(5, 44px); gap: 10px; justify-content: center; margin: 20px 0; }
 .seat-map__aisle-gap { width: 20px; }
 .seat {
   width: 44px; height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);

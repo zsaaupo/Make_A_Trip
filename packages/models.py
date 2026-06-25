@@ -23,7 +23,7 @@ class Package(models.Model):
     ]
 
     name = models.CharField(max_length=150)
-    date = models.DateField(help_text="Package departure/start date")
+    # date = models.DateField(help_text="Package departure/start date")
     location = models.CharField(max_length=150)
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     duration = models.CharField(max_length=50, help_text="e.g. 3 Days 2 Nights")
@@ -45,7 +45,7 @@ class Package(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['date']
+        ordering = ['created_at']
 
     def __str__(self):
         return f"{self.name} ({self.location})"
