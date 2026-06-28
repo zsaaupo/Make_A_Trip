@@ -24,56 +24,56 @@ from .serializers import (
     LoginSerializer, ProfileSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
 )
-
+from core.email_service import send_email
 
 class LoginRateThrottle(AnonRateThrottle):
     """NFR-SEC-03: basic brute-force mitigation on the login endpoint."""
     scope = 'login'
 
-def send_mail(to, subject, body):
-
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = '465'
-    sender_email = os.getenv('EMAIL_HOST_USER')
-    sender_password = os.getenv('EMAIL_HOST_PASSWORD')
-    server = None
-
-    try:
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        server.ehlo()
-        server.login(sender_email, sender_password)
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = to
-        msg['Subject'] = subject
-
-
-        html = """\
-        <html>
-            <head></head>
-            <body>
-        """
-        html += body.replace('\r\n', '<br/>\r\n')
-        """
-            </body>
-        </html>
-        """
-        msg.attach(MIMEText(html, 'html'))
-        server.sendmail(
-            from_addr=sender_email,
-            to_addrs=to,
-            msg=msg.as_string())
-        print("Mail Send")
-    except Exception as ex:
-        print(str(ex))
-    finally:
-        if server != None:
-            server.quit()
+# def send_mail(to, subject, body):
+#
+#     smtp_server = 'smtp.gmail.com'
+#     smtp_port = '465'
+#     sender_email = os.getenv('EMAIL_HOST_USER')
+#     sender_password = os.getenv('EMAIL_HOST_PASSWORD')
+#     server = None
+#
+#     try:
+#         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+#         server.ehlo()
+#         server.login(sender_email, sender_password)
+#         msg = MIMEMultipart()
+#         msg['From'] = sender_email
+#         msg['To'] = to
+#         msg['Subject'] = subject
+#
+#
+#         html = """\
+#         <html>
+#             <head></head>
+#             <body>
+#         """
+#         html += body.replace('\r\n', '<br/>\r\n')
+#         """
+#             </body>
+#         </html>
+#         """
+#         msg.attach(MIMEText(html, 'html'))
+#         server.sendmail(
+#             from_addr=sender_email,
+#             to_addrs=to,
+#             msg=msg.as_string())
+#         print("Mail Send")
+#     except Exception as ex:
+#         print(str(ex))
+#     finally:
+#         if server != None:
+#             server.quit()
 
 
 def thread_send_email(to, subject, body):
 
-    thread = Thread(target=send_mail, args=(to, subject, body))
+    thread = Thread(target=send_email, args=(to, subject, body))
     thread.start()
 
 @api_view(['GET'])

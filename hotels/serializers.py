@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from core.validators import validate_image_upload_size
 from reviews.models import Review
 from .models import Amenity, Hotel, Room, HotelBooking
 
@@ -11,6 +12,7 @@ class AmenitySerializer(serializers.ModelSerializer):
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(validators=[validate_image_upload_size])
     amenities = AmenitySerializer(many=True, read_only=True)
     amenity_ids = serializers.PrimaryKeyRelatedField(
         queryset=Amenity.objects.all(), many=True, write_only=True, required=False, source='amenities'

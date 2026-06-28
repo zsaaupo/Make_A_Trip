@@ -2,13 +2,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from core.validators import validate_image_upload_size
 from .models import Profile
 
 
 class RegisterSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150)
     gender = serializers.ChoiceField(choices=Profile.GENDER_CHOICES)
-    photo = serializers.ImageField(required=False, allow_null=True)
+    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload_size])
     email = serializers.EmailField()
     phone = serializers.CharField(max_length=20)
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -53,6 +54,7 @@ class LoginSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     is_admin = serializers.BooleanField(source='user.is_staff', read_only=True)
+    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload_size])
 
     class Meta:
         model = Profile

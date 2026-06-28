@@ -1,11 +1,13 @@
 from rest_framework import serializers
 
+from core.validators import validate_image_upload_size
 from reviews.models import Review
 from hotels.serializers import HotelAdminSerializer
 from .models import Package, PackageBooking
 
 
 class PackageSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(validators=[validate_image_upload_size])
     hotel_detail = HotelAdminSerializer(source='hotel', read_only=True)
     transport_label = serializers.SerializerMethodField()
     avg_rating = serializers.SerializerMethodField()

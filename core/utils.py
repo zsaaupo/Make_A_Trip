@@ -17,7 +17,7 @@ load_dotenv()
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
-
+from .email_service import send_email
 
 def make_invoice_id(prefix, user):
     """
@@ -67,50 +67,50 @@ def calculate_refund_percentage(service_datetime, cancelled_at=None):
 #         # Notifications must never break the booking flow itself.
 #         pass
 
-def send_mail(to, subject, body):
-
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = '465'
-    sender_email = os.getenv('EMAIL_HOST_USER')
-    sender_password = os.getenv('EMAIL_HOST_PASSWORD')
-    server = None
-
-    try:
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        server.ehlo()
-        server.login(sender_email, sender_password)
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = to
-        msg['Subject'] = subject
-
-
-        html = """\
-        <html>
-            <head></head>
-            <body>
-        """
-        html += html + body
-        """
-            </body>
-        </html>
-        """
-        msg.attach(MIMEText(html, 'html'))
-        server.sendmail(
-            from_addr=sender_email,
-            to_addrs=to,
-            msg=msg.as_string())
-        print("Mail Send")
-    except Exception as ex:
-        print(str(ex))
-    finally:
-        if server != None:
-            server.quit()
+# def send_mail(to, subject, body):
+#
+#     smtp_server = 'smtp.gmail.com'
+#     smtp_port = '465'
+#     sender_email = os.getenv('EMAIL_HOST_USER')
+#     sender_password = os.getenv('EMAIL_HOST_PASSWORD')
+#     server = None
+#
+#     try:
+#         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+#         server.ehlo()
+#         server.login(sender_email, sender_password)
+#         msg = MIMEMultipart()
+#         msg['From'] = sender_email
+#         msg['To'] = to
+#         msg['Subject'] = subject
+#
+#
+#         html = """\
+#         <html>
+#             <head></head>
+#             <body>
+#         """
+#         html += html + body
+#         """
+#             </body>
+#         </html>
+#         """
+#         msg.attach(MIMEText(html, 'html'))
+#         server.sendmail(
+#             from_addr=sender_email,
+#             to_addrs=to,
+#             msg=msg.as_string())
+#         print("Mail Send")
+#     except Exception as ex:
+#         print(str(ex))
+#     finally:
+#         if server != None:
+#             server.quit()
 
 
 def thread_send_email(to, subject, body):
 
-    thread = Thread(target=send_mail, args=(to, subject, body))
+    thread = Thread(target=send_email, args=(to, subject, body))
     thread.start()
 
 def notify_status_change(booking, invoice_id, service_label):

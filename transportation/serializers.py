@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
+from core.validators import validate_image_upload_size
 from reviews.models import Review
 from .models import Bus, Car, BusBooking, CarBooking
 
 
 class BusSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(validators=[validate_image_upload_size])
     avg_rating = serializers.SerializerMethodField()
     available_seats = serializers.SerializerMethodField()
     occupied_seats = serializers.SerializerMethodField()
@@ -28,6 +30,7 @@ class BusSerializer(serializers.ModelSerializer):
 
 
 class CarSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(validators=[validate_image_upload_size])
     avg_rating = serializers.SerializerMethodField()
     # is_booked = serializers.SerializerMethodField()
 
