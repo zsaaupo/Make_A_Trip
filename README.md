@@ -93,15 +93,15 @@ Built from a formal Software Requirements Specification (SRS) document, the proj
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
+| Layer | Technology                                               |
+|---|----------------------------------------------------------|
 | **Backend** | Python 3.10–3.13, Django 5.2, Django REST Framework 3.17 |
 | **Frontend** | Django Templates, HTML5, CSS3, Vanilla JavaScript (ES6+) |
-| **Database** | SQLite 3 |
-| **Authentication** | Django Session Auth + CSRF |
-| **Password Hashing** | bcrypt (BCryptSHA256) with PBKDF2 fallback |
-| **Image Processing** | Pillow |
-| **Typography** | Google Fonts (Poppins, Inter) |
+| **Database** | MySQL                                                    |
+| **Authentication** | Django Session Auth + CSRF                               |
+| **Password Hashing** | bcrypt (BCryptSHA256) with PBKDF2 fallback               |
+| **Image Processing** | Pillow                                                   |
+| **Typography** | Google Fonts (Poppins, Inter)                            |
 
 ---
 
@@ -117,9 +117,11 @@ Make_A_Trip/
 │
 ├── core/                       # Shared foundation layer
 │   ├── constants.py            # BookingStatus, ApprovalStatus, PaymentMethod, etc.
+│   ├── email_service.py        # Email function
 │   ├── models.py               # BookingBase — abstract base for all booking types
 │   ├── permissions.py          # IsAdminUser, IsAdminOrReadOnly, IsOwnerOrAdmin
 │   ├── utils.py                # Invoice ID generation, refund calculation, email
+│   ├── validators.py           # Image upload validator
 │   └── management/commands/    # Custom management commands
 │       └── mark_completed_bookings.py
 │
@@ -230,37 +232,34 @@ Then open **http://127.0.0.1:8000/** in your browser.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/Make_A_Trip.git
+git clone https://github.com/zsaaupo/Make_A_Trip
 cd Make_A_Trip
 
-# 2. Create and activate a virtual environment
+# 2. Create a virtual environment
 python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
 
-# 3. Install dependencies
+#3. Activate the virtual environment
+source venv/bin/activate  #macOS/Linux        
+venv\Scripts\activate     #Windows
+
+# 4. Install dependencies
 pip install -r requirements.txt
 
-# 4. Apply database migrations
+# 5. Apply database migrations
 python manage.py migrate
 
-# 5. Start the development server
+# 6. Start the development server
 python manage.py runserver
 ```
 
 Then open **http://127.0.0.1:8000/**.
 
-### Demo Data
-
-Load sample data to explore the app immediately — a hotel with rooms, a bus, a car, a tour package, a coupon, and two ready-to-use accounts:
-
-```bash
-python manage.py shell < scripts/seed_data.py
-```
+### User Data
 
 | Role | Email | Password |
 |---|---|---|
-| **Admin** | `admin@makeatrip.local` | `Admin@12345` |
-| **Customer** | `customer@example.com` | `Customer@123` |
+| **Admin** | `zsaaupo008@gmail.com` | `Admin@12345` |
+| **Customer** | `appuser@user.com` | `Customer@123456` |
 
 > **Note:** To create an admin manually, use `python manage.py createsuperuser`. Admins don't have a public registration flow — the `is_staff` flag must be set via the Django admin panel or CLI.
 
@@ -269,24 +268,6 @@ python manage.py shell < scripts/seed_data.py
 ## Configuration
 
 All configuration lives in [`makeatrip/settings.py`](makeatrip/settings.py). Key settings can be overridden via environment variables.
-
-### Email
-
-By default, emails (OTP codes, booking notifications) print to the terminal via Django's **console email backend** — zero configuration required.
-
-To send real emails (e.g., via Gmail with an [App Password](https://support.google.com/accounts/answer/185833)):
-
-```bash
-# Linux / macOS
-export EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-export EMAIL_HOST_USER=you@gmail.com
-export EMAIL_HOST_PASSWORD=your-app-password
-
-# Windows
-set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-set EMAIL_HOST_USER=you@gmail.com
-set EMAIL_HOST_PASSWORD=your-app-password
-```
 
 ### Cancellation Policy
 
@@ -426,8 +407,6 @@ All REST API endpoints are mounted under `/api/`. Authentication uses Django ses
 | `python manage.py runserver` | Start the development server |
 | `python manage.py migrate` | Apply database migrations |
 | `python manage.py createsuperuser` | Create an admin account |
-| `python manage.py mark_completed_bookings` | Transition confirmed bookings past their service date to completed status. Run periodically (cron, Task Scheduler) or manually. |
-| `python manage.py shell < scripts/seed_data.py` | Load demo data |
 
 ---
 
@@ -436,7 +415,7 @@ All REST API endpoints are mounted under `/api/`. Authentication uses Django ses
 | Role | How It's Created | Capabilities |
 |---|---|---|
 | **Customer** | Public registration (`/register/`) | Browse listings, make bookings, apply coupons, cancel bookings, submit reviews, manage profile |
-| **Administrator** | `createsuperuser` or seed script (`is_staff=True`) | All customer capabilities + create/edit/approve/decline listings, manage bookings, create coupons, moderate reviews, view analytics |
+| **Administrator** | `createsuperuser` or (`is_staff=True`) | All customer capabilities + create/edit/approve/decline listings, manage bookings, create coupons, moderate reviews, view analytics |
 
 Permission enforcement is handled by three DRF permission classes:
 

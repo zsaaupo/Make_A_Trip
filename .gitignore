@@ -11,5 +11,3 @@ __pycache__/
 # Environment variables — never commit secrets
 .env
 .env.*
-
-READMEold.md
