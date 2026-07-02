@@ -205,6 +205,8 @@ Make_A_Trip/
 
 ## Getting Started
 
+### Check the deployed projcet: [**LIVE**](https://make-a-trip-bzbv.onrender.com/)
+
 ### Prerequisites
 
 - **Python 3.10 – 3.13** (Django 5.2 does not support 3.9 or older)
