@@ -8,10 +8,11 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from core.constants import ApprovalStatus, BookingStatus
+from core.constants import ApprovalStatus, BookingStatus, PaymentMethod
 from core.permissions import IsAdminUser
 from core.utils import make_invoice_id, calculate_refund_percentage, notify_status_change
 from coupons.models import Coupon
+from payments.services import SSLCommerzError, ensure_sslcommerz_configured, payment_redirect_response
 
 from .models import Bus, Car, BusBooking, CarBooking
 from .serializers import BusSerializer, CarSerializer, BusBookingSerializer, CarBookingSerializer
@@ -188,6 +189,12 @@ def bus_booking_list_create(request):
     serializer = BusBookingSerializer(data=request.data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
+    if data['payment_method'] == PaymentMethod.PAY_NOW:
+        try:
+            ensure_sslcommerz_configured()
+        except SSLCommerzError as exc:
+            return Response({'detail': str(exc)}, status=503)
+
     bus = data['bus']
     num_seats = len(data['seat_numbers'].split(','))
     subtotal = bus.price_per_seat * num_seats
@@ -210,7 +217,14 @@ def bus_booking_list_create(request):
         terms_accepted=True,
     )
     notify_status_change(booking, booking.invoice_id, "bus")
-    return Response(BusBookingSerializer(booking, context={'request': request}).data, status=status.HTTP_201_CREATED)
+    try:
+        response_data = payment_redirect_response(request, booking, BusBookingSerializer, "bus")
+    except SSLCommerzError as exc:
+        booking.status = BookingStatus.DECLINED
+        booking.decline_reason = str(exc)
+        booking.save(update_fields=['status', 'decline_reason'])
+        return Response({'detail': str(exc)}, status=502)
+    return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -272,7 +286,12 @@ def car_booking_list_create(request):
     serializer = CarBookingSerializer(data=request.data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
-    print(data)
+    if data['payment_method'] == PaymentMethod.PAY_NOW:
+        try:
+            ensure_sslcommerz_configured()
+        except SSLCommerzError as exc:
+            return Response({'detail': str(exc)}, status=503)
+
     car = data['car']
     subtotal = car.price
     discount, coupon_code, error_response = _apply_coupon(request, subtotal)
@@ -293,7 +312,14 @@ def car_booking_list_create(request):
         terms_accepted=True,
     )
     notify_status_change(booking, booking.invoice_id, "car")
-    return Response(CarBookingSerializer(booking, context={'request': request}).data, status=status.HTTP_201_CREATED)
+    try:
+        response_data = payment_redirect_response(request, booking, CarBookingSerializer, "car")
+    except SSLCommerzError as exc:
+        booking.status = BookingStatus.DECLINED
+        booking.decline_reason = str(exc)
+        booking.save(update_fields=['status', 'decline_reason'])
+        return Response({'detail': str(exc)}, status=502)
+    return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])

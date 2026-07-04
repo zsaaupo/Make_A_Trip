@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'coupons',
     'reviews',
     'dashboard',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -151,6 +152,25 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
 ]
+
+
+# ---------------------------------------------------------------------------
+# SSLCommerz payment gateway.
+# Sandbox is enabled by default; set SSLCOMMERZ_SANDBOX=False for live mode.
+# Keep Store ID and Store Password in .env, never in source control.
+# ---------------------------------------------------------------------------
+SSLCOMMERZ_STORE_ID = os.getenv("SSLCOMMERZ_STORE_ID", "")
+SSLCOMMERZ_STORE_PASSWORD = os.getenv("SSLCOMMERZ_STORE_PASSWORD", "")
+SSLCOMMERZ_SANDBOX = os.getenv("SSLCOMMERZ_SANDBOX", "True").lower() in ("1", "true", "yes")
+SSLCOMMERZ_CURRENCY = os.getenv("SSLCOMMERZ_CURRENCY", "BDT")
+SSLCOMMERZ_CALLBACK_BASE_URL = os.getenv("SSLCOMMERZ_CALLBACK_BASE_URL", "")
+
+if SSLCOMMERZ_SANDBOX:
+    SSLCOMMERZ_INIT_URL = "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
+    SSLCOMMERZ_VALIDATION_URL = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
+else:
+    SSLCOMMERZ_INIT_URL = "https://securepay.sslcommerz.com/gwprocess/v4/api.php"
+    SSLCOMMERZ_VALIDATION_URL = "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php"
 
 
 # ---------------------------------------------------------------------------

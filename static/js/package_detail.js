@@ -71,8 +71,8 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
   btn.disabled = true; btn.textContent = 'Booking...';
   try {
     const booking = await apiRequest('/packages/bookings/', { method: 'POST', body: payload });
-    showToast(`Booked! Invoice ${booking.invoice_id}`, 'success');
-    setTimeout(() => window.location.href = '/bookings/', 900);
+    showToast(booking.payment_url ? 'Redirecting to SSLCommerz...' : `Booked! Invoice ${booking.invoice_id}`, 'success');
+    continueToPaymentOrBookings(booking);
   } catch (err) {
     showToast(err.message, 'error');
   } finally {

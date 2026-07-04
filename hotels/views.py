@@ -9,10 +9,11 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from core.constants import ApprovalStatus, BookingStatus
+from core.constants import ApprovalStatus, BookingStatus, PaymentMethod
 from core.permissions import IsAdminUser
 from core.utils import make_invoice_id, calculate_refund_percentage, notify_status_change
 from coupons.models import Coupon
+from payments.services import SSLCommerzError, ensure_sslcommerz_configured, payment_redirect_response
 from reviews.models import Review
 
 from .models import Amenity, Hotel, Room, HotelBooking
@@ -154,6 +155,12 @@ def booking_list_create(request):
     serializer = HotelBookingSerializer(data=request.data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
+    if data['payment_method'] == PaymentMethod.PAY_NOW:
+        try:
+            ensure_sslcommerz_configured()
+        except SSLCommerzError as exc:
+            return Response({'detail': str(exc)}, status=503)
+
     room = data['room']
     nights = (data['check_out_date'] - data['check_in_date']).days
     subtotal = room.price_per_night * nights
@@ -193,7 +200,14 @@ def booking_list_create(request):
         terms_accepted=True,
     )
     notify_status_change(booking, booking.invoice_id, "hotel room")
-    return Response(HotelBookingSerializer(booking, context={'request': request}).data, status=status.HTTP_201_CREATED)
+    try:
+        response_data = payment_redirect_response(request, booking, HotelBookingSerializer, "hotel room")
+    except SSLCommerzError as exc:
+        booking.status = BookingStatus.DECLINED
+        booking.decline_reason = str(exc)
+        booking.save(update_fields=['status', 'decline_reason'])
+        return Response({'detail': str(exc)}, status=502)
+    return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])

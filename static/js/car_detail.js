@@ -67,14 +67,11 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
     terms_accepted: true,
   };
 
-  console.log(payload)
-  console.log(document.getElementById('car-trip-date').value)
-
   btn.disabled = true; btn.textContent = 'Booking...';
   try {
     const booking = await apiRequest('/transport/car-bookings/', { method: 'POST', body: payload });
-    showToast(`Booked! Invoice ${booking.invoice_id}`, 'success');
-    setTimeout(() => window.location.href = '/bookings/', 900);
+    showToast(booking.payment_url ? 'Redirecting to SSLCommerz...' : `Booked! Invoice ${booking.invoice_id}`, 'success');
+    continueToPaymentOrBookings(booking);
   } catch (err) {
     showToast(err.message, 'error');
   } finally {

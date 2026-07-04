@@ -106,6 +106,14 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function continueToPaymentOrBookings(booking) {
+  if (booking && booking.payment_url) {
+    window.location.href = booking.payment_url;
+    return;
+  }
+  setTimeout(() => window.location.href = '/bookings/', 900);
+}
+
 /* ------------------------- Global UI wiring ------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   const navToggle = document.getElementById('nav-toggle');

@@ -120,9 +120,9 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
   btn.disabled = true; btn.textContent = 'Booking...';
   try {
     const booking = await apiRequest('/hotels/bookings/', { method: 'POST', body: payload });
-    showToast(`Booked! Invoice ${booking.invoice_id}`, 'success');
+    showToast(booking.payment_url ? 'Redirecting to SSLCommerz...' : `Booked! Invoice ${booking.invoice_id}`, 'success');
     closeBookingModal();
-    setTimeout(() => window.location.href = '/bookings/', 900);
+    continueToPaymentOrBookings(booking);
   } catch (err) {
     showToast(err.message, 'error');
   } finally {

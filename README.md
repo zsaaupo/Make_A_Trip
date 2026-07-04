@@ -28,7 +28,7 @@
   - [Manual Setup](#manual-setup)
   - [Demo Data](#demo-data)
 - [Configuration](#configuration)
-  - [Email](#email)
+  - [Payments](#payments)
   - [Cancellation Policy](#cancellation-policy)
   - [Session & Security](#session--security)
 - [API Reference](#api-reference)
@@ -271,6 +271,20 @@ Then open **http://127.0.0.1:8000/**.
 
 All configuration lives in [`makeatrip/settings.py`](makeatrip/settings.py). Key settings can be overridden via environment variables.
 
+### Payments
+
+SSLCommerz Sandbox is used for `Pay Now` bookings. Add these values to your local `.env`:
+
+```env
+SSLCOMMERZ_STORE_ID=your_sandbox_store_id
+SSLCOMMERZ_STORE_PASSWORD=your_sandbox_store_password
+SSLCOMMERZ_SANDBOX=True
+SSLCOMMERZ_CURRENCY=BDT
+SSLCOMMERZ_CALLBACK_BASE_URL=https://your-public-domain.example
+```
+
+For local browser testing, `SSLCOMMERZ_CALLBACK_BASE_URL` can be left empty and Django will build callback URLs from the current request. For deployed testing, set it to the public HTTPS domain so SSLCommerz can reach `/api/payments/sslcommerz/success/`, `/fail/`, `/cancel/`, and `/ipn/`.
+
 ### Cancellation Policy
 
 Tiered refund rules are defined in `settings.py` and applied automatically:
@@ -399,6 +413,15 @@ All REST API endpoints are mounted under `/api/`. Authentication uses Django ses
 | `GET` | `/api/dashboard/my-bookings/` | Customer: full booking history |
 | `GET` | `/api/dashboard/admin/all-bookings/` | Admin: all bookings system-wide |
 | `GET` | `/api/dashboard/admin/stats/` | Admin: aggregate statistics |
+
+### Payments
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET/POST` | `/api/payments/sslcommerz/success/` | SSLCommerz success callback; validates payment and confirms booking |
+| `GET/POST` | `/api/payments/sslcommerz/fail/` | SSLCommerz failure callback; declines booking |
+| `GET/POST` | `/api/payments/sslcommerz/cancel/` | SSLCommerz cancel callback; cancels booking |
+| `POST` | `/api/payments/sslcommerz/ipn/` | SSLCommerz IPN callback; validates server-to-server notifications |
 
 ---
 
