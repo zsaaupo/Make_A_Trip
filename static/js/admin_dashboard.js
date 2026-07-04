@@ -20,6 +20,7 @@ function loadPanel(name) {
     cars: loadCars,
     packages: loadPackages,
     bookings: loadAdminBookings,
+    payments: loadAdminPayments,
     reviews: loadPendingReviews,
     coupons: loadCoupons,
   }[name] || (() => {}))();
@@ -426,6 +427,46 @@ async function setBookingStatus(type, id, status) {
   } catch (err) { showToast(err.message, 'error'); }
 }
 document.getElementById('bk-filter-btn').addEventListener('click', loadAdminBookings);
+
+/* ============================== Payments ============================== */
+function paymentBadgeClass(status) {
+  return {
+    initiated: 'badge badge--pending',
+    validated: 'badge badge--confirmed',
+    failed: 'badge badge--declined',
+    cancelled: 'badge badge--cancelled',
+    invalid: 'badge badge--declined',
+  }[status] || 'badge';
+}
+
+async function loadAdminPayments() {
+  const container = document.getElementById('payments-table');
+  const statusFilter = document.getElementById('pay-status-filter').value;
+  const params = statusFilter ? `?status=${statusFilter}` : '';
+  try {
+    const payments = await apiRequest(`/dashboard/admin/payments/${params}`);
+    if (!payments.length) {
+      container.innerHTML = `<p class="muted">No payments match this filter.</p>`;
+      return;
+    }
+    const rows = payments.map(p => `
+      <tr>
+        <td>${escapeHtml(p.tran_id)}</td>
+        <td><span class="${paymentBadgeClass(p.status)}">${escapeHtml(p.status_display)}</span></td>
+        <td>${formatMoney(p.amount)} ${escapeHtml(p.currency)}</td>
+        <td style="text-transform:capitalize;">${escapeHtml(p.booking_type || '')}</td>
+        <td>${escapeHtml(p.service_name || '')}</td>
+        <td>${escapeHtml(p.customer_name || '')}<div class="hint">${escapeHtml(p.customer_email || '')}</div></td>
+        <td><span class="${statusBadgeClass(p.booking_status)}">${escapeHtml(p.booking_status_display || '')}</span></td>
+        <td>${escapeHtml(p.card_type || '-')}<div class="hint">${escapeHtml(p.bank_tran_id || '')}</div></td>
+        <td>${formatDateTime(p.created_at)}</td>
+      </tr>`).join('');
+    container.innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th>Transaction</th><th>Payment</th><th>Amount</th><th>Type</th><th>Service</th><th>Customer</th><th>Booking</th><th>Gateway</th><th>Created</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } catch (err) {
+    container.innerHTML = `<p class="muted">Couldn't load payments: ${escapeHtml(err.message)}</p>`;
+  }
+}
+document.getElementById('pay-filter-btn').addEventListener('click', loadAdminPayments);
 
 /* ============================== Reviews ============================== */
 async function loadPendingReviews() {

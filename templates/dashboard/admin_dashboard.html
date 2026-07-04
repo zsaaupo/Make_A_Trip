@@ -15,6 +15,7 @@
     <button class="tab-btn" data-tab="cars">Cars</button>
     <button class="tab-btn" data-tab="packages">Packages</button>
     <button class="tab-btn" data-tab="bookings">Bookings</button>
+    <button class="tab-btn" data-tab="payments">Payments</button>
     <button class="tab-btn" data-tab="reviews">Reviews</button>
     <button class="tab-btn" data-tab="coupons">Coupons</button>
   </div>
@@ -145,6 +146,25 @@
       <button class="btn btn--primary" id="bk-filter-btn">Filter</button>
     </div>
     <div id="bookings-table"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Payments -->
+  <div class="tab-panel" id="panel-payments">
+    <div class="section-heading"><h2>All payments</h2></div>
+    <div class="filter-bar">
+      <div class="form-group"><label>Status</label>
+        <select id="pay-status-filter">
+          <option value="">All</option>
+          <option value="initiated">Initiated</option>
+          <option value="validated">Validated</option>
+          <option value="failed">Failed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="invalid">Invalid</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" id="pay-filter-btn">Filter</button>
+    </div>
+    <div id="payments-table"><div class="spinner"></div></div>
   </div>
 
   <!-- Reviews -->

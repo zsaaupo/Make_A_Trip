@@ -8,6 +8,7 @@ from hotels.models import Hotel, HotelBooking
 from transportation.models import Bus, Car, BusBooking, CarBooking
 from packages.models import Package, PackageBooking
 from reviews.models import Review
+from payments.models import PaymentTransaction
 from django.contrib.auth.models import User
 
 
@@ -72,6 +73,65 @@ def admin_all_bookings(request):
     status_filter = request.query_params.get('status')
     rows = _gather_all_bookings(status_filter=status_filter)
     return Response(rows)
+
+
+def _payment_booking_type(booking):
+    if isinstance(booking, HotelBooking):
+        return 'hotel'
+    if isinstance(booking, BusBooking):
+        return 'bus'
+    if isinstance(booking, CarBooking):
+        return 'car'
+    if isinstance(booking, PackageBooking):
+        return 'package'
+    return ''
+
+
+def _payment_service_name(booking):
+    if isinstance(booking, HotelBooking):
+        return booking.room.hotel.name
+    if isinstance(booking, BusBooking):
+        return booking.bus.name
+    if isinstance(booking, CarBooking):
+        return booking.car.name
+    if isinstance(booking, PackageBooking):
+        return booking.package.name
+    return ''
+
+
+def _serialize_payment(payment):
+    booking = payment.booking
+    customer = getattr(booking, 'customer', None)
+    profile = getattr(customer, 'profile', None)
+    return {
+        'id': payment.id,
+        'tran_id': payment.tran_id,
+        'amount': str(payment.amount),
+        'currency': payment.currency,
+        'status': payment.status,
+        'status_display': payment.get_status_display(),
+        'bank_tran_id': payment.bank_tran_id,
+        'card_type': payment.card_type,
+        'booking_type': _payment_booking_type(booking),
+        'booking_status': getattr(booking, 'status', ''),
+        'booking_status_display': booking.get_status_display() if booking else '',
+        'service_name': _payment_service_name(booking),
+        'customer_name': getattr(profile, 'full_name', '') or getattr(customer, 'username', ''),
+        'customer_email': getattr(customer, 'email', ''),
+        'created_at': payment.created_at,
+        'updated_at': payment.updated_at,
+    }
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_all_payments(request):
+    """Admin: view all SSLCommerz payment transactions."""
+    qs = PaymentTransaction.objects.select_related('booking_content_type').all()
+    status_filter = request.query_params.get('status')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    return Response([_serialize_payment(payment) for payment in qs])
 
 
 @api_view(['GET'])

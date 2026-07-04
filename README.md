@@ -26,7 +26,6 @@
   - [Prerequisites](#prerequisites)
   - [One-Command Setup](#one-command-setup)
   - [Manual Setup](#manual-setup)
-  - [Demo Data](#demo-data)
 - [Configuration](#configuration)
   - [Payments](#payments)
   - [Cancellation Policy](#cancellation-policy)
@@ -39,6 +38,7 @@
   - [Coupons](#coupons)
   - [Reviews](#reviews)
   - [Dashboard](#dashboard)
+  - [Payments](#payments-1)
 - [Management Commands](#management-commands)
 - [User Roles & Permissions](#user-roles--permissions)
 - [Design Decisions](#design-decisions)
@@ -71,6 +71,7 @@ Built from a formal Software Requirements Specification (SRS) document, the proj
 | **Bus Booking** | Browse bus routes, view interactive seat maps, select seats, and book |
 | **Car Booking** | Browse cars by trip type (hourly, one-way, round trip) and book |
 | **Tour Packages** | Browse bundled packages (hotel + transport), view inclusions/exclusions |
+| **SSLCommerz Payment** | Choose Pay Now at checkout and complete payment through SSLCommerz Sandbox |
 | **Coupons** | Apply fixed or percentage discount codes at checkout |
 | **Reviews** | Rate and comment on confirmed bookings (one review per booking) |
 | **Booking History** | Unified cross-module booking history with status filtering |
@@ -88,6 +89,7 @@ Built from a formal Software Requirements Specification (SRS) document, the proj
 | **Review Moderation** | Approve or decline customer reviews before they appear publicly |
 | **Dashboard & Analytics** | Aggregate statistics — bookings per module, revenue, pending approvals |
 | **All Bookings View** | View all bookings system-wide with status filtering |
+| **Payments View** | View all SSLCommerz payment transactions with status filtering |
 
 ---
 
@@ -149,6 +151,12 @@ Make_A_Trip/
 │   ├── views.py                # Discovery, admin CRUD, booking endpoints
 │   └── urls.py                 # /api/packages/...
 │
+├── payments/                   # SSLCommerz payment management
+│   ├── models.py               # PaymentTransaction (tran_id, amount, status)
+│   ├── services.py             # SSLCommerz session creation and validation
+│   ├── views.py                # Payment callback endpoints
+│   └── urls.py                 # /api/payments/sslcommerz/...
+│
 ├── coupons/                    # Discount coupon system
 │   ├── models.py               # Coupon (fixed/percentage, expiry, usage cap)
 │   ├── serializers.py          # Coupon serializer
@@ -205,7 +213,7 @@ Make_A_Trip/
 
 ## Getting Started
 
-### Check the deployed projcet: [**LIVE**](https://make-a-trip-bzbv.onrender.com/)
+### Check the deployed projcet: [**LIVE**](https://makeatrip.pythonanywhere.com/)
 
 ### Prerequisites
 
@@ -273,7 +281,7 @@ All configuration lives in [`makeatrip/settings.py`](makeatrip/settings.py). Key
 
 ### Payments
 
-SSLCommerz Sandbox is used for `Pay Now` bookings. Add these values to your local `.env`:
+SSLCommerz Sandbox is used for `Pay Now` bookings across hotels, buses, cars, and tour packages. Add these values to your local `.env`:
 
 ```env
 SSLCOMMERZ_STORE_ID=your_sandbox_store_id
@@ -284,6 +292,10 @@ SSLCOMMERZ_CALLBACK_BASE_URL=https://your-public-domain.example
 ```
 
 For local browser testing, `SSLCOMMERZ_CALLBACK_BASE_URL` can be left empty and Django will build callback URLs from the current request. For deployed testing, set it to the public HTTPS domain so SSLCommerz can reach `/api/payments/sslcommerz/success/`, `/fail/`, `/cancel/`, and `/ipn/`.
+
+When a customer chooses `Pay Now`, the booking is created as pending and the backend creates an SSLCommerz payment session. On successful callback/IPN, the transaction is validated with SSLCommerz before the booking is marked confirmed. Failed, cancelled, or invalid payments update the related booking accordingly.
+
+Admins can review payment records from the Admin Dashboard's **Payments** tab or via `/api/dashboard/admin/payments/`. This endpoint is protected with `IsAdminUser`.
 
 ### Cancellation Policy
 
@@ -412,6 +424,7 @@ All REST API endpoints are mounted under `/api/`. Authentication uses Django ses
 |---|---|---|
 | `GET` | `/api/dashboard/my-bookings/` | Customer: full booking history |
 | `GET` | `/api/dashboard/admin/all-bookings/` | Admin: all bookings system-wide |
+| `GET` | `/api/dashboard/admin/payments/` | Admin: all SSLCommerz payment transactions; accepts optional `?status=` filter |
 | `GET` | `/api/dashboard/admin/stats/` | Admin: aggregate statistics |
 
 ### Payments
@@ -464,6 +477,8 @@ The SRS was thorough, but some implementation details required assumptions:
 | **Login rate limiting** | 10 attempts/min/IP as baseline brute-force mitigation |
 | **Generic `Review` model** | One model backs all four service types via Django's ContentType framework; enforces one review per booking |
 | **Coupon system** | Fixed/percentage discounts, expiry dates, min order amount, usage cap, global or per-user assignment |
+| **SSLCommerz integration** | Sandbox credentials live in environment variables; callbacks validate `val_id` before confirming a booking |
+| **Payment audit table** | `PaymentTransaction` stores gateway status, transaction ID, amount, card type, and related booking via Django ContentType |
 | **Invoice ID format** | `<PREFIX>-<USR3>-<TIMESTAMP>` for human-readable, collision-resistant identifiers |
 
 ---
